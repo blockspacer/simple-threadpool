@@ -174,18 +174,22 @@ namespace thread_pool {
 		std::vector<std::thread> threads;
 		joinThreads joiner;
 
+		void runPendingTask()
+		{
+			functionWrapper task;
+			if (workQueue.try_pop(task))
+				task();
+			else
+				std::this_thread::yield();
+		}
+
 		void workerThread()
 		{
 			while (!done)
 			{
-				functionWrapper task;
-				if (workQueue.try_pop(task))
-					task();
-				else
-				{
-					std::this_thread::yield();
-					std::this_thread::sleep_for(std::chrono::milliseconds(300));
-				}
+				runPendingTask();
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(256));
 			}
 		}
 
